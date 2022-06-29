@@ -1,6 +1,13 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "incremental": true,
+    "declaration": true,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "composite": true,
     "rootDir": "./src",
     "outDir": "./dist",
     "strictNullChecks": true,
