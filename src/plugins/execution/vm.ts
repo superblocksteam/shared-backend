@@ -1,5 +1,6 @@
 import { ExecutionContext, ExecutionOutput } from '@superblocksteam/shared';
 import { NodeVM } from 'vm2';
+import { ENV_VAR_AWS_DEFAULT_REGION, ENV_VAR_AWS_REGION, ENV_VAR_AWS_ROLE_ARN, ENV_VAR_AWS_WEB_IDENTITY_TOKEN_FILE } from '../../types';
 
 export function nodeVMWithContext(
   context: ExecutionContext,
@@ -25,6 +26,12 @@ export function nodeVMWithContext(
     require: {
       builtin: ['*'],
       external: extLibs
+    },
+    env: {
+      [ENV_VAR_AWS_DEFAULT_REGION]: process.env[ENV_VAR_AWS_DEFAULT_REGION],
+      [ENV_VAR_AWS_ROLE_ARN]: process.env[ENV_VAR_AWS_ROLE_ARN],
+      [ENV_VAR_AWS_WEB_IDENTITY_TOKEN_FILE]: process.env[ENV_VAR_AWS_WEB_IDENTITY_TOKEN_FILE],
+      [ENV_VAR_AWS_REGION]: process.env[ENV_VAR_AWS_REGION]
     }
   });
   return vm;
