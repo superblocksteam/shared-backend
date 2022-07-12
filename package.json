@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.1692.0",
+  "version": "0.1734.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -47,14 +47,14 @@
     "aws-sdk": "2.1084.0",
     "axios": "0.25.0",
     "base64url": "3.0.1",
-    "bson": "4.6.1",
+    "bson": "4.6.5",
     "express": "4.17.2",
     "form-data": "^4.0.0",
     "json5": "2.2.1",
     "jsonwebtoken": "8.5.1",
     "lodash": "4.17.21",
     "minimist": "1.2.6",
-    "moment": "2.29.2",
+    "moment": "2.29.4",
     "mustache": "4.2.0",
     "pino": "6.11.0",
     "socket.io": "4.5.0",

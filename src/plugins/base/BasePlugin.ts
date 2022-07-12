@@ -4,6 +4,7 @@ import {
   DatasourceMetadataDto,
   ExecutionContext,
   ExecutionOutput,
+  ForwardedCookies,
   RawRequest
 } from '@superblocksteam/shared';
 import _ from 'lodash';
@@ -14,7 +15,6 @@ import { AgentCredentials } from '../auth';
 import { PluginConfiguration } from '../configuration';
 import { RecursionContext, resolveActionConfiguration } from '../execution';
 import { RequestFiles } from '../files';
-
 export interface PluginExecutionProps<ConfigurationType = DatasourceConfiguration> {
   context: ExecutionContext;
   datasourceConfiguration: ConfigurationType;
@@ -24,6 +24,7 @@ export interface PluginExecutionProps<ConfigurationType = DatasourceConfiguratio
   recursionContext: RecursionContext;
   environment: string;
   relayDelegate: RelayDelegate;
+  forwardedCookies?: ForwardedCookies;
 }
 
 // TODO(frank): This could probably use a better name.
@@ -38,6 +39,7 @@ export interface PluginProps {
   files: RequestFiles;
   recursionContext: RecursionContext;
   relayDelegate: RelayDelegate;
+  forwardedCookies?: ForwardedCookies;
 }
 
 export abstract class BasePlugin {
@@ -104,7 +106,8 @@ export abstract class BasePlugin {
     files,
     agentCredentials,
     recursionContext,
-    relayDelegate
+    relayDelegate,
+    forwardedCookies
   }: {
     environment: string;
     context: ExecutionContext;
@@ -114,6 +117,7 @@ export abstract class BasePlugin {
     agentCredentials: AgentCredentials;
     recursionContext: RecursionContext;
     relayDelegate: RelayDelegate;
+    forwardedCookies?: ForwardedCookies;
   }): Promise<ExecutionOutput> {
     const startTime = new Date();
     const output = await this.execute({
@@ -124,7 +128,8 @@ export abstract class BasePlugin {
       agentCredentials,
       recursionContext,
       environment,
-      relayDelegate
+      relayDelegate,
+      forwardedCookies
     });
     output.startTimeUtc = startTime;
     output.executionTime = Date.now() - startTime.getTime();
@@ -156,7 +161,8 @@ export abstract class BasePlugin {
     actionConfiguration,
     files,
     recursionContext,
-    relayDelegate
+    relayDelegate,
+    forwardedCookies
   }: PluginProps): Promise<ExecutionOutput> {
     let output = new ExecutionOutput();
 
@@ -203,7 +209,8 @@ export abstract class BasePlugin {
         files,
         agentCredentials,
         recursionContext,
-        relayDelegate
+        relayDelegate,
+        forwardedCookies
       });
       output.request = rawRequest;
       this.logger.info(`Executing API step ${this.name()} took ${output.executionTime}ms`);
