@@ -15,10 +15,10 @@ import { AgentCredentials } from '../auth';
 import { PluginConfiguration } from '../configuration';
 import { RecursionContext, resolveActionConfiguration } from '../execution';
 import { RequestFiles } from '../files';
-export interface PluginExecutionProps<ConfigurationType = DatasourceConfiguration> {
+export interface PluginExecutionProps<DCType = DatasourceConfiguration, ACType = ActionConfiguration> {
   context: ExecutionContext;
-  datasourceConfiguration: ConfigurationType;
-  actionConfiguration: ActionConfiguration;
+  datasourceConfiguration: DCType;
+  actionConfiguration: ACType;
   files: RequestFiles;
   agentCredentials: AgentCredentials;
   recursionContext: RecursionContext;
