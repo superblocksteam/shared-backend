@@ -1,21 +1,20 @@
-import { AWSDatasourceConfiguration } from '@superblocksteam/shared';
+import { AWSAuthType, AWSDatasourceConfiguration } from '@superblocksteam/shared';
 import { ConfigurationOptions, TokenFileWebIdentityCredentials } from 'aws-sdk';
-import { isEmpty } from 'lodash';
 
 export function getAwsClientConfig(datasourceConfig: AWSDatasourceConfiguration): ConfigurationOptions {
-  if (
-    isEmpty(datasourceConfig.authentication?.custom?.region?.value) ||
-    isEmpty(datasourceConfig.authentication?.custom?.accessKeyID?.value) ||
-    isEmpty(datasourceConfig.authentication?.custom?.secretKey?.value)
-  ) {
-    return {
-      credentials: new TokenFileWebIdentityCredentials()
-    };
+  switch (datasourceConfig.awsAuthType) {
+    case AWSAuthType.EC2_INSTANCE_METADATA:
+      return {};
+    case AWSAuthType.TOKEN_FILE:
+      return {
+        credentials: new TokenFileWebIdentityCredentials()
+      };
+    case AWSAuthType.ACCESS_KEY:
+    default:
+      return {
+        region: datasourceConfig.authentication?.custom?.region?.value,
+        accessKeyId: datasourceConfig.authentication?.custom?.accessKeyID?.value,
+        secretAccessKey: datasourceConfig.authentication?.custom?.secretKey?.value
+      };
   }
-
-  return {
-    region: datasourceConfig.authentication?.custom?.region?.value,
-    accessKeyId: datasourceConfig.authentication?.custom?.accessKeyID?.value,
-    secretAccessKey: datasourceConfig.authentication?.custom?.secretKey?.value
-  };
 }
