@@ -100,37 +100,8 @@ export const resolveAllBindings = async (
     // TODO may need to create a new VM each time to not pollute scope
     try {
       const val = await vm.run(
-        `
-module.exports = async function() {
+        `module.exports = (function() {
   ${generateJSLibrariesImportString()}
-
-  function serialize(buffer, mode) {
-    if (mode === 'binary' || mode === 'text') {
-      // utf8 encoding is lossy for truly binary data, but not an error in JS
-      return buffer.toString(mode === 'binary' ? 'base64' : 'utf8');
-    }
-    // Otherwise, detect mode from first 1024 chars
-    const chunk = buffer.slice(0, 1024).toString('utf8');
-    if (chunk.indexOf('\u{FFFD}') > -1) {
-      return buffer.toString('base64');
-    }
-    return buffer.toString('utf8');
-  }
-
-  function fetchFromController(location, callback) {
-    require('http').get($fileServerUrl + '?location=' + location, {
-      headers: { 'x-superblocks-agent-key': $agentKey }
-    }, (response) => {
-      if (response.statusCode != 200) {
-        return callback(new Error('Internal Server Error'), null);
-      }
-
-      const chunks = [];
-      response.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-      response.on('error', (err) => callback(err, null));
-      response.on('end', () => callback(null, Buffer.concat(chunks)));
-    })
-  }
 
   Object.entries($superblocksFiles).forEach(([treePath, diskPath]) => {
     const file = _.get(global, treePath);
@@ -138,26 +109,77 @@ module.exports = async function() {
     _.set(global, treePath, {
       ...file,
       previewUrl: undefined,
-      readContentsAsync: async (mode) => serialize(await require('util').promisify(fetchFromController)(diskPath), mode),
-      readContents: (mode) => serialize(require('deasync')(fetchFromController)(diskPath), mode)
+      readContents: (mode) => {
+        function serialize(buffer, mode) {
+          if (mode === 'binary' || mode === 'text') {
+            // utf8 encoding is lossy for truly binary data, but not an error in JS
+            return buffer.toString(mode === 'binary' ? 'base64' : 'utf8');
+          }
+          // Otherwise, detect mode from first 1024 chars
+          const chunk = buffer.slice(0, 1024).toString('utf8');
+          if (chunk.indexOf('\u{FFFD}') > -1) {
+            return buffer.toString('base64');
+          }
+          return buffer.toString('utf8');
+        }
+
+        function fetchFromControllerAsync(location, callback) {
+          require('http').get($fileServerUrl + '?location=' + location, {
+            headers: { 'x-superblocks-agent-key': $agentKey }
+          }, (response) => {
+            if (response.statusCode != 200) {
+              return callback(null, new Error('Internal Server Error'));
+            }
+
+            const chunks = [];
+            response.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            response.on('error', (err) => callback(null, err));
+            response.on('end', () => callback(Buffer.concat(chunks), null));
+          })
+        }
+
+        // This function is a hack. It's required to remain compatible with
+        // the synchronous contract we have with readContents.
+        function fetchFromControllerSync(location) {
+          let _response;
+          let _err;
+          fetchFromControllerAsync(location, (response, err) => {
+            _response = response;
+            _err = err;
+          })
+          while(_response === undefined || _err === undefined) {
+            require('deasync').sleep(100);
+          }
+          if (_err) {
+            throw _err
+          }
+          return _response;
+        }
+
+        let flagWorker = false
+        try {
+          if (($flagWorker == true)) {
+            flagWorker = true
+          }
+        } catch (e) {
+          if (!(e instanceof ReferenceError)) {
+            throw e
+          }
+          // fallthrough otherwise
+        }
+
+        return serialize(flagWorker ? fetchFromControllerSync(diskPath) : fs.readFileSync(diskPath), mode)
+      }
     });
   });
 
   return ${toEval};
-}()`,
+})()`,
         __dirname
       );
       if (isObject(val)) {
         ret[toEval] = JSON.stringify(val);
         continue;
-      }
-      try {
-        if (isObject(JSON.parse(val))) {
-          ret[toEval] = val;
-          continue;
-        }
-      } catch (_) {
-        // let it fallthrough
       }
       if (isString(val) && escapeStrings) {
         // escape strings and remove extra quotes added by stringify
@@ -293,7 +315,6 @@ export function generateJSLibrariesImportString(): string {
     var AWS = require('aws-sdk');
     var xmlbuilder2 = require('xmlbuilder2');
     var base64url = require('base64url');
-    var deasync = require('deasync');
   `;
 }
 
