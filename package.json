@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.1838.0",
+  "version": "0.1859.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -59,7 +59,8 @@
     "pino": "6.11.0",
     "socket.io": "4.5.0",
     "vm2": "3.9.10",
-    "xmlbuilder2": "3.0.2"
+    "xmlbuilder2": "3.0.2",
+    "deasync": "0.1.26"
   },
   "husky": {
     "hooks": {
