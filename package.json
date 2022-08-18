@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.1902.0",
+  "version": "0.1928.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -23,6 +23,7 @@
   },
   "license": "Superblocks Community Software License",
   "devDependencies": {
+    "@types/jest": "26.0.24",
     "@types/lodash": "^4.14.170",
     "@types/node": "^16.7.10",
     "@types/systeminformation": "^3.54.1",
@@ -34,32 +35,28 @@
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-prettier": "3.3.1",
     "husky": "^4.3.8",
+    "jest": "26.6.3",
     "lint-staged": "^10.5.4",
     "prettier": "2.2.1",
     "rimraf": "^3.0.2",
-    "typescript": "4.2.3",
-    "jest": "26.6.3",
-    "@types/jest": "26.0.24",
-    "ts-jest": "26.5.6"
+    "ts-jest": "26.5.6",
+    "typescript": "4.2.3"
   },
   "dependencies": {
     "@superblocksteam/shared": "^0.x",
     "aws-sdk": "2.1084.0",
     "axios": "0.25.0",
-    "base64url": "3.0.1",
     "bson": "4.6.5",
     "express": "4.18.1",
     "form-data": "^4.0.0",
     "json5": "2.2.1",
-    "jsonwebtoken": "8.5.1",
     "lodash": "4.17.21",
-    "minimist": "1.2.6",
-    "moment": "2.29.4",
     "mustache": "4.2.0",
     "pino": "6.11.0",
-    "socket.io": "4.5.0",
     "vm2": "3.9.10",
     "xmlbuilder2": "3.0.2",
+    "moment": "2.29.4",
+    "base64url": "3.0.1",
     "deasync": "0.1.26"
   },
   "husky": {
