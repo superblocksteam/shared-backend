@@ -1,3 +1,4 @@
+import { TokenLocation } from '@superblocksteam/shared';
 import Mustache from 'mustache';
 
 // All variables are HTML-escaped by default in Mustache,
@@ -37,6 +38,44 @@ export const renderFieldValues = (object: any, context: any): void => {
 export const renderValue = (val: string, context: any): string => {
   const flatContext = new FlatContext(context);
   return Mustache.render(val, flatContext);
+};
+
+// map a bind to list of locations
+// we need to use a list because the same binding might appear multiple times
+export type BindingLocations = Record<string, TokenLocation[]>;
+
+export interface RenderedValueWithLoc {
+  renderedStr: string;
+  bindingLocations: BindingLocations;
+}
+
+// like renderValue but includes location information for the values included in the output
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+export const renderValueWithLoc = (val: string, context: any): RenderedValueWithLoc => {
+  const flatContext = new FlatContext(context);
+  const renderedStr: string = Mustache.render(val, flatContext);
+
+  const bindingLocations: BindingLocations = {};
+  const valTokens: [string, string, number, number][] = Mustache.parse(val);
+  let offset = 0;
+  for (const [type, payload, start, end] of valTokens) {
+    if (type === 'name') {
+      // payload is the string inside the mustache curly braces
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const v = (flatContext as any).lookup(payload);
+      if (v !== null && v !== undefined) {
+        (bindingLocations[payload] ?? (bindingLocations[payload] = [])).push({
+          startOffset: offset,
+          length: v.length
+        });
+        offset += v.length;
+        continue;
+      }
+    }
+    offset += end - start;
+  }
+
+  return { renderedStr, bindingLocations };
 };
 
 export const extractMustacheStrings = (input: string): Array<string> => {

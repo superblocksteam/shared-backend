@@ -5,7 +5,8 @@ import {
   ExecutionOutput,
   IntegrationError,
   isReadableFile,
-  Property
+  Property,
+  ResolvedActionConfigurationProperty
 } from '@superblocksteam/shared';
 import _, { get, isArray, isObject, isPlainObject, isString } from 'lodash';
 import { render } from 'mustache';
@@ -178,8 +179,7 @@ export const resolveActionConfiguration = async (
   files: RequestFiles,
   property: string,
   escapeStrings: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any[] | string> => {
+): Promise<ResolvedActionConfigurationProperty> => {
   let toResolve = _.get(actionConfiguration, property);
   const filePaths = getTreePathToDiskPath(context.globals, files as Array<RequestFile>);
   // TODO(saksham): Clean this up alongside ActionConfiguration refactor
@@ -211,10 +211,12 @@ export const resolveActionConfiguration = async (
         value: resolvedPropertyValue
       });
     }
-    return resolvedProperties;
+    return { resolved: resolvedProperties };
   }
   const bindingResolution = await resolveAllBindings(toResolve, context, filePaths, escapeStrings);
-  return render(toResolve, new FlatContext(bindingResolution));
+  return {
+    resolved: render(toResolve, new FlatContext(bindingResolution))
+  };
 };
 
 export const resolveConfigurationRecursive = async (

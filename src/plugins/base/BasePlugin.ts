@@ -5,7 +5,9 @@ import {
   ExecutionContext,
   ExecutionOutput,
   ForwardedCookies,
-  RawRequest
+  PlaceholdersInfo,
+  RawRequest,
+  ResolvedActionConfigurationProperty
 } from '@superblocksteam/shared';
 import _ from 'lodash';
 import P from 'pino';
@@ -137,7 +139,9 @@ export abstract class BasePlugin {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async resolveActionConfigurationProperty(resolutionContext: ActionConfigurationResolutionContext): Promise<string | any[]> {
+  async resolveActionConfigurationProperty(
+    resolutionContext: ActionConfigurationResolutionContext
+  ): Promise<ResolvedActionConfigurationProperty> {
     return resolveActionConfiguration(
       resolutionContext.context,
       resolutionContext.actionConfiguration,
@@ -167,6 +171,7 @@ export abstract class BasePlugin {
     let output = new ExecutionOutput();
 
     let rawRequest: RawRequest;
+    let placeholdersInfo: PlaceholdersInfo | undefined;
     try {
       // resolve dynamic ActionConfiguration properties
       for (const property of this.dynamicProperties()) {
@@ -176,21 +181,20 @@ export abstract class BasePlugin {
         }
 
         const shouldEscapeProperty = this.escapeStringProperties().includes(property);
-        _.set(
+        const resolvedPropery = await this.resolveActionConfigurationProperty({
+          context: redactedContext,
           actionConfiguration,
+          files,
           property,
-          await this.resolveActionConfigurationProperty({
-            context: redactedContext,
-            actionConfiguration,
-            files,
-            property,
-            escapeStrings: shouldEscapeProperty
-          })
-        );
+          escapeStrings: shouldEscapeProperty
+        });
+        _.set(actionConfiguration, property, resolvedPropery.resolved);
         context.preparedStatementContext = redactedContext.preparedStatementContext;
+        placeholdersInfo ??= resolvedPropery.placeholdersInfo;
       }
       rawRequest = this.getRequest(actionConfiguration, redactedDatasourceConfiguration, files);
       output.request = rawRequest;
+      if (placeholdersInfo) output.placeholdersInfo = placeholdersInfo;
     } catch (err) {
       err.message = addErrorSuggestion(err.message);
       output.logError(`Error evaluating bindings: ${err.message.replace('error evaluating ', '')}`);
@@ -213,6 +217,7 @@ export abstract class BasePlugin {
         forwardedCookies
       });
       output.request = rawRequest;
+      if (placeholdersInfo) output.placeholdersInfo = placeholdersInfo;
       this.logger.info(`Executing API step ${this.name()} took ${output.executionTime}ms`);
     } catch (err) {
       output.logError(err.message);
