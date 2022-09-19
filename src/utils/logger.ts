@@ -1,5 +1,27 @@
-import { LogFields, logger } from '@superblocksteam/shared';
+import { context } from '@opentelemetry/api';
+import {
+  LogFields,
+  logger,
+  OBS_TAG_RESOURCE_ID,
+  OBS_TAG_RESOURCE_TYPE,
+  OBS_TAG_ENV,
+  OBS_TAG_ORG_ID,
+  OBS_TAG_CORRELATION_ID,
+  OBS_TAG_RESOURCE_NAME,
+  OBS_TAG_USER_EMAIL,
+  OBS_TAG_RESOURCE_ACTION,
+  OBS_TAG_ERROR,
+  OBS_TAG_ERROR_TYPE,
+  OBS_TAG_CONTROLLER_ID,
+  OBS_TAG_WORKER_ID,
+  OBS_TAG_PARENT_ID,
+  OBS_TAG_PARENT_NAME,
+  OBS_TAG_PARENT_TYPE,
+  OBS_TAG_PLUGIN_NAME,
+  OBS_TAG_INTEGRATION_ID
+} from '@superblocksteam/shared';
 import { default as P, default as pino } from 'pino';
+import { otelSpanContextToDataDog } from './tracing';
 
 // RemoteLogger lets us enforce the precense of required
 // logging fields that we must send to the customer.
@@ -24,7 +46,11 @@ export class RemoteLogger implements logger {
         remote: 'true'
       },
       enabled,
-      formatters
+      formatters,
+      mixin() {
+        // https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/opentelemetry/?tab=nodejs
+        return otelSpanContextToDataDog(context.active());
+      }
     };
 
     if (stream) {
@@ -58,23 +84,23 @@ export class RemoteLogger implements logger {
   // instead of `'resource-id'`. It's somewhat cleaner.
   private marshalFields(fields: LogFields) {
     return {
-      'resource-id': fields.resourceId,
-      'resource-type': fields.resourceType,
-      environment: fields.environment,
-      'organization-id': fields.organizationId,
-      'correlation-id': fields.correlationId,
-      'resource-name': fields.resourceName,
-      'user-email': fields.userEmail,
-      'resource-action': fields.resourceAction,
-      error: fields.error,
-      'error-type': fields.errorType,
-      'controller-id': fields.controllerId,
-      'worker-id': fields.workerId,
-      'parent-id': fields.parentId,
-      'parent-name': fields.parentName,
-      'parent-type': fields.parentType,
-      plugin: fields.plugin,
-      'integration-id': fields.integragionId
+      [OBS_TAG_RESOURCE_ID]: fields.resourceId,
+      [OBS_TAG_RESOURCE_TYPE]: fields.resourceType,
+      [OBS_TAG_ENV]: fields.environment,
+      [OBS_TAG_ORG_ID]: fields.organizationId,
+      [OBS_TAG_CORRELATION_ID]: fields.correlationId,
+      [OBS_TAG_RESOURCE_NAME]: fields.resourceName,
+      [OBS_TAG_USER_EMAIL]: fields.userEmail,
+      [OBS_TAG_RESOURCE_ACTION]: fields.resourceAction,
+      [OBS_TAG_ERROR]: fields.error,
+      [OBS_TAG_ERROR_TYPE]: fields.errorType,
+      [OBS_TAG_CONTROLLER_ID]: fields.controllerId,
+      [OBS_TAG_WORKER_ID]: fields.workerId,
+      [OBS_TAG_PARENT_ID]: fields.parentId,
+      [OBS_TAG_PARENT_NAME]: fields.parentName,
+      [OBS_TAG_PARENT_TYPE]: fields.parentType,
+      [OBS_TAG_PLUGIN_NAME]: fields.plugin,
+      [OBS_TAG_INTEGRATION_ID]: fields.integragionId
     };
   }
 }

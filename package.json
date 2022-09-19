@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.2073.0",
+  "version": "0.2126.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -43,21 +43,23 @@
     "typescript": "4.2.3"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.2.0",
     "@superblocksteam/shared": "^0.x",
     "aws-sdk": "2.1084.0",
     "axios": "0.25.0",
+    "base64url": "3.0.1",
     "bson": "4.6.5",
+    "deasync": "0.1.26",
     "express": "4.18.1",
     "form-data": "^4.0.0",
     "json5": "2.2.1",
     "lodash": "4.17.21",
+    "moment": "2.29.4",
     "mustache": "4.2.0",
     "pino": "6.11.0",
+    "prom-client": "14.1.0",
     "vm2": "3.9.10",
-    "xmlbuilder2": "3.0.2",
-    "moment": "2.29.4",
-    "base64url": "3.0.1",
-    "deasync": "0.1.26"
+    "xmlbuilder2": "3.0.2"
   },
   "husky": {
     "hooks": {
