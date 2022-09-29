@@ -1,3 +1,4 @@
+import { Tracer, context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import {
   ActionConfiguration,
   DatasourceConfiguration,
@@ -7,16 +8,19 @@ import {
   ForwardedCookies,
   PlaceholdersInfo,
   RawRequest,
-  ResolvedActionConfigurationProperty
+  ResolvedActionConfigurationProperty,
+  IntegrationError
 } from '@superblocksteam/shared';
 import _ from 'lodash';
 import P from 'pino';
 import { RelayDelegate } from '../../relay';
 import { ActionConfigurationResolutionContext, addErrorSuggestion } from '../../utils';
+import { getTraceTagsFromContext } from '../../utils';
 import { AgentCredentials } from '../auth';
 import { PluginConfiguration } from '../configuration';
 import { RecursionContext, resolveActionConfiguration } from '../execution';
 import { RequestFiles } from '../files';
+
 export interface PluginExecutionProps<DCType = DatasourceConfiguration, ACType = ActionConfiguration> {
   context: ExecutionContext;
   datasourceConfiguration: DCType;
@@ -44,63 +48,104 @@ export interface PluginProps {
   forwardedCookies?: ForwardedCookies;
 }
 
+export function Trace(spanName: string, errorMessage?: string, additionalTraceTags?: Record<string, string>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  return function (target: BasePlugin, name: string, descriptor: PropertyDescriptor) {
+    const fn = descriptor.value;
+    descriptor.value = async function (...args) {
+      return this.tracer.startActiveSpan(
+        spanName,
+        {
+          attributes: {
+            ...this.getTraceTags(),
+            ...additionalTraceTags
+          },
+          kind: SpanKind.SERVER
+        },
+        async (span) => {
+          try {
+            const result = await fn.apply(this, args);
+            span.setStatus({ code: SpanStatusCode.OK });
+            return result;
+          } catch (err) {
+            span.setStatus({ code: SpanStatusCode.ERROR });
+            throw new IntegrationError(`${errorMessage}: ${err}`);
+          } finally {
+            span.end();
+          }
+        }
+      );
+    };
+    return descriptor;
+  };
+}
+
 export abstract class BasePlugin {
   logger: P.Logger;
+  tracer: Tracer;
   pluginConfiguration: PluginConfiguration;
 
-  attachLogger(logger: P.Logger): void {
+  public attachLogger(logger: P.Logger): void {
     this.logger = logger;
   }
 
-  configure(pluginConfiguration: PluginConfiguration): void {
+  public attachTracer(tracer: Tracer): void {
+    this.tracer = tracer;
+  }
+
+  public getTraceTags(): Record<string, string> {
+    return getTraceTagsFromContext(context.active());
+  }
+
+  public configure(pluginConfiguration: PluginConfiguration): void {
     this.pluginConfiguration = pluginConfiguration;
   }
 
-  abstract execute(executionProps: PluginExecutionProps): Promise<ExecutionOutput>;
+  public abstract execute(executionProps: PluginExecutionProps): Promise<ExecutionOutput>;
 
   getRequest(actionConfiguration: ActionConfiguration, datasourceConfiguration: DatasourceConfiguration, files: RequestFiles): RawRequest {
     return undefined;
   }
 
   // (e.g. API based plugins will have different metadata than database plugins)
-  abstract metadata(
+  public abstract metadata(
     datasourceConfiguration: DatasourceConfiguration,
     actionConfiguration?: ActionConfiguration
   ): Promise<DatasourceMetadataDto>;
 
-  abstract test(datasourceConfiguration: DatasourceConfiguration): Promise<void>;
+  public abstract test(datasourceConfiguration: DatasourceConfiguration): Promise<void>;
 
   // method that will be executed before deleting a plugin from database
-  preDelete(datasourceConfiguration: DatasourceConfiguration): Promise<void> {
+  public preDelete(datasourceConfiguration: DatasourceConfiguration): Promise<void> {
     // No-op
     return Promise.resolve();
   }
 
   //TODO for plugin templates to be more declarative, we should consider
   // parsing all action/datasource configurations instead of hardcoding the fields here
-  abstract dynamicProperties(): Array<string>;
+  public abstract dynamicProperties(): Array<string>;
 
   // No-op to be implemented by child class
-  init(): void {
+  public init(): void {
     // No-op
   }
 
   // No-op to be implemented by child class
-  shutdown(): void {
+  public shutdown(): void {
     // No-op
   }
 
   // escapeStringProperties specifies the properties whose bindings should be
   // string escaped.
-  escapeStringProperties(): Array<string> {
+  public escapeStringProperties(): Array<string> {
     return [];
   }
 
-  name(): string {
+  public name(): string {
     return this.constructor.name;
   }
 
-  async timedExecute({
+  public async timedExecute({
     environment,
     context,
     datasourceConfiguration,
@@ -139,7 +184,7 @@ export abstract class BasePlugin {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async resolveActionConfigurationProperty(
+  public async resolveActionConfigurationProperty(
     resolutionContext: ActionConfigurationResolutionContext
   ): Promise<ResolvedActionConfigurationProperty> {
     return resolveActionConfiguration(
@@ -155,7 +200,7 @@ export abstract class BasePlugin {
    * Instead of throwing errors to caller, we set the error
    * in the ExecutionOutput and return it to the caller
    */
-  async setupAndExecute({
+  public async setupAndExecute({
     environment,
     context,
     redactedContext,

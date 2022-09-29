@@ -1,4 +1,4 @@
-import { Span, Context, SpanContext, trace } from '@opentelemetry/api';
+import { Span, Context, SpanContext, trace, propagation, context } from '@opentelemetry/api';
 
 const UINT_MAX = 4294967296;
 
@@ -91,4 +91,17 @@ export function otelSpanContextToDataDog(ctx: Context): Record<string, string> {
     'dd.trace_id': toNumberString(fromString(spanContext.traceId.slice(spanContext.traceId.length / 2), 16)),
     'dd.span_id': toNumberString(fromString(spanContext.spanId, 16))
   };
+}
+
+export function getTraceTagsFromContext(context: Context): Record<string, string> {
+  const baggage = propagation.getBaggage(context);
+  const traceTags = {};
+  baggage?.getAllEntries().forEach((value) => {
+    traceTags[value[0]] = value[1].value;
+  });
+  return traceTags;
+}
+
+export function getTraceTagsFromActiveContext(): Record<string, string> {
+  return getTraceTagsFromContext(context.active());
 }

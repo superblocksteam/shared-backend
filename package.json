@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.2126.0",
+  "version": "0.2176.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -43,7 +43,7 @@
     "typescript": "4.2.3"
   },
   "dependencies": {
-    "@opentelemetry/api": "^1.2.0",
+    "@opentelemetry/api": "1.2.0",
     "@superblocksteam/shared": "^0.x",
     "aws-sdk": "2.1084.0",
     "axios": "0.25.0",
