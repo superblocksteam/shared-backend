@@ -46,7 +46,7 @@ export function DestroyConnection(target: DatabasePlugin, name: string, descript
           return result;
         } catch (err) {
           span.setStatus({ code: SpanStatusCode.ERROR });
-          throw new IntegrationError(`failed to destroy ${this.name} connection: ${err}`);
+          this.logger.warn(`failed to destroy ${this.name} connection: ${err}`);
         } finally {
           span.end();
         }
