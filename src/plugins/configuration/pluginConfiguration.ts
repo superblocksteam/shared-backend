@@ -20,4 +20,5 @@ export type WorkflowPluginConfiguration = {
 
 export type RestApiPluginConfiguration = {
   restApiExecutionTimeoutMs: number;
+  restApiMaxContentLengthBytes: number;
 };

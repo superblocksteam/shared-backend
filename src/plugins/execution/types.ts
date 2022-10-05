@@ -24,6 +24,7 @@ export type FetchAndExecuteProps = {
   apiId: string;
   isPublished: boolean;
   environment: string;
+  eventType?: string;
   executionParams: ExecutionParam[];
   agentCredentials: AgentCredentials;
   files: RequestFiles;
