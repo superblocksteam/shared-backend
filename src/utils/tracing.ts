@@ -1,4 +1,4 @@
-import { Span, Context, SpanContext, trace, propagation, context } from '@opentelemetry/api';
+import { Span, Context, SpanContext, trace, propagation, context, BaggageEntry } from '@opentelemetry/api';
 
 const UINT_MAX = 4294967296;
 
@@ -104,4 +104,12 @@ export function getTraceTagsFromContext(context: Context): Record<string, string
 
 export function getTraceTagsFromActiveContext(): Record<string, string> {
   return getTraceTagsFromContext(context.active());
+}
+
+export function getBaggageFromObject(obj: Record<string, string>): Record<string, BaggageEntry> {
+  const baggageEntries = {};
+  Object.entries(obj).forEach((value) => {
+    baggageEntries[value[0]] = { value: value[1] as string };
+  });
+  return baggageEntries;
 }

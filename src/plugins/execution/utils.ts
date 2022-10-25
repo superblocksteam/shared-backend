@@ -193,23 +193,31 @@ export const resolveActionConfiguration = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resolvedProperties: any[] = [];
     for (const property of toResolve) {
+      const resolvedPropery = { ...property };
+
       const propertyKeyResolution = await resolveAllBindings(property.key, context, filePaths, escapeStrings);
       let resolvedPropertyKey = '';
       if (property.key) {
         resolvedPropertyKey = render(property.key, new FlatContext(propertyKeyResolution));
       }
+      resolvedPropery.key = resolvedPropertyKey;
 
       const resolvedValueResolution = await resolveAllBindings(property.value, context, filePaths, escapeStrings);
       let resolvedPropertyValue = '';
       if (property.value) {
         resolvedPropertyValue = render(property.value, new FlatContext(resolvedValueResolution));
       }
+      resolvedPropery.value = resolvedPropertyValue;
 
-      resolvedProperties.push({
-        ...property,
-        key: resolvedPropertyKey,
-        value: resolvedPropertyValue
-      });
+      // filename for a file field in a multipart/form-data body
+      if (property.file?.filename) {
+        const resolvedValueResolution = await resolveAllBindings(property.file.filename, context, filePaths, escapeStrings);
+        resolvedPropery.file = {
+          filename: render(property.file.filename, new FlatContext(resolvedValueResolution))
+        };
+      }
+
+      resolvedProperties.push(resolvedPropery);
     }
     return { resolved: resolvedProperties };
   }

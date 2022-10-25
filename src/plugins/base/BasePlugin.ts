@@ -1,4 +1,4 @@
-import { Tracer, context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { Tracer, context, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import {
   ActionConfiguration,
   DatasourceConfiguration,
@@ -80,10 +80,41 @@ export function Trace(spanName: string, errorMessage?: string, additionalTraceTa
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function ResolveActionConfigurationProperty(target: BasePlugin, name: string, descriptor: PropertyDescriptor) {
+  const fn = descriptor.value;
+  descriptor.value = async function (...args) {
+    return this.tracer.startActiveSpan(
+      'plugin.resolveActionConfigurationProperty',
+      {
+        attributes: this.getTraceTags(),
+        kind: SpanKind.SERVER
+      },
+      async (span) => {
+        try {
+          const result = await fn.apply(this, args);
+          span.setStatus({ code: SpanStatusCode.OK });
+          return result;
+        } catch (err) {
+          span.setStatus({ code: SpanStatusCode.ERROR });
+          throw new IntegrationError(`failed to resolve action configuration for ${this.name()}: ${err}`);
+        } finally {
+          span.end();
+        }
+      }
+    );
+  };
+  return descriptor;
+}
+
 export abstract class BasePlugin {
   logger: P.Logger;
   tracer: Tracer;
   pluginConfiguration: PluginConfiguration;
+
+  public constructor() {
+    this.tracer = trace.getTracer('plugin');
+  }
 
   public attachLogger(logger: P.Logger): void {
     this.logger = logger;
@@ -183,6 +214,7 @@ export abstract class BasePlugin {
     return output;
   }
 
+  @ResolveActionConfigurationProperty
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async resolveActionConfigurationProperty(
     resolutionContext: ActionConfigurationResolutionContext

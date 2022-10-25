@@ -11,6 +11,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "strictNullChecks": true,
+    "experimentalDecorators": true
   },
   "exclude": ["./node_modules"],
   "include": ["./src/**/*.ts"]

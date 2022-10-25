@@ -16,7 +16,7 @@ export async function getFileStream(context: ExecutionContext, location: string)
   const headers = {};
   headers[AGENT_KEY_HEADER] = context.globals['$agentKey'];
 
-  const response = await axios.get(`${context.globals['$fileServerUrl']}?location=${location}`, {
+  const response = await axios.get(`${context.globals['$fileServerUrl']}?location=${encodeURIComponent(location)}`, {
     headers,
     responseType: 'stream'
   });

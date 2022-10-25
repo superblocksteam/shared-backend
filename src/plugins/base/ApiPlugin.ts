@@ -3,6 +3,7 @@ import {
   ExecutionOutput,
   IntegrationError,
   InternalServerError,
+  KVPair,
   Property,
   RestApiBodyDataType
 } from '@superblocksteam/shared';
@@ -41,9 +42,10 @@ export const updateRequestBody = function ({
     case RestApiBodyDataType.FORM: {
       if (!isEmpty(actionConfiguration.formData)) {
         const formData = new FormData();
-        for (const property of actionConfiguration.formData as Property[]) {
+        for (const property of actionConfiguration.formData as KVPair[]) {
           if (!isEmpty(property.key)) {
-            formData.append(property.key as string, property.value);
+            const opts: FormData.AppendOptions | undefined = property.file === undefined ? undefined : { filename: property.file.filename };
+            formData.append(property.key as string, property.value, opts);
           }
         }
         options.data = formData;
