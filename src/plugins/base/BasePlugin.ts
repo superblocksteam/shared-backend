@@ -20,6 +20,7 @@ import { AgentCredentials } from '../auth';
 import { PluginConfiguration } from '../configuration';
 import { RecursionContext, resolveActionConfiguration } from '../execution';
 import { RequestFiles } from '../files';
+import { ConnectionPoolCoordinator } from '../pool';
 
 export interface PluginExecutionProps<DCType = DatasourceConfiguration, ACType = ActionConfiguration> {
   context: ExecutionContext;
@@ -69,6 +70,7 @@ export function Trace(spanName: string, errorMessage?: string, additionalTraceTa
             return result;
           } catch (err) {
             span.setStatus({ code: SpanStatusCode.ERROR });
+            span.recordException(err);
             throw new IntegrationError(`${errorMessage}: ${err}`);
           } finally {
             span.end();
@@ -97,6 +99,7 @@ export function ResolveActionConfigurationProperty(target: BasePlugin, name: str
           return result;
         } catch (err) {
           span.setStatus({ code: SpanStatusCode.ERROR });
+          span.recordException(err);
           throw new IntegrationError(`failed to resolve action configuration for ${this.name()}: ${err}`);
         } finally {
           span.end();
@@ -130,6 +133,10 @@ export abstract class BasePlugin {
 
   public configure(pluginConfiguration: PluginConfiguration): void {
     this.pluginConfiguration = pluginConfiguration;
+  }
+
+  public attachConnectionPool(connectionPoolCoordinator: ConnectionPoolCoordinator): void {
+    // do nothing by default, override in DB plugins that need a connection pool
   }
 
   public abstract execute(executionProps: PluginExecutionProps): Promise<ExecutionOutput>;

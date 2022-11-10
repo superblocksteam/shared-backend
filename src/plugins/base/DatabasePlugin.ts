@@ -21,6 +21,7 @@ export function CreateConnection(target: DatabasePlugin, name: string, descripto
           return result;
         } catch (err) {
           span.setStatus({ code: SpanStatusCode.ERROR });
+          span.recordException(err);
           throw new IntegrationError(`failed to create ${this.name()} connection: ${err}`);
         } finally {
           span.end();
@@ -52,6 +53,7 @@ export function DestroyConnection(
           return result;
         } catch (err) {
           span.setStatus({ code: SpanStatusCode.ERROR });
+          span.recordException(err);
           this.logger.warn(`failed to destroy ${this.name()} connection: ${err}`);
         } finally {
           span.end();
@@ -64,12 +66,7 @@ export function DestroyConnection(
 
 // Wrapper class for tracing db plugins
 export abstract class DatabasePlugin extends BasePlugin {
-  private readonly useOrderedParameters: boolean;
-
-  constructor({ useOrderedParameters } = { useOrderedParameters: true }) {
-    super();
-    this.useOrderedParameters = useOrderedParameters;
-  }
+  protected readonly useOrderedParameters: boolean = true;
 
   @ResolveActionConfigurationProperty
   public async resolveActionConfigurationProperty({
@@ -115,6 +112,7 @@ export abstract class DatabasePlugin extends BasePlugin {
           return result;
         } catch (err) {
           span.setStatus({ code: SpanStatusCode.ERROR });
+          span.recordException(err);
           throw new IntegrationError(`${this.name()} query failed to execute: ${err}`);
         } finally {
           span.end();

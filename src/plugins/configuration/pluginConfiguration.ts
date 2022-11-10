@@ -1,10 +1,15 @@
 import { ApiExecutionResponse } from '@superblocksteam/shared';
 import { FetchAndExecuteProps } from '../execution';
 
-export type PluginConfiguration = JavascriptPluginConfiguration &
+export type PluginConfiguration = ConnectionPoolConfiguration &
+  JavascriptPluginConfiguration &
   PythonPluginConfiguration &
   WorkflowPluginConfiguration &
   RestApiPluginConfiguration;
+
+export type ConnectionPoolConfiguration = {
+  connectionPoolIdleTimeoutMs: number;
+};
 
 export type JavascriptPluginConfiguration = {
   javascriptExecutionTimeoutMs: string;
