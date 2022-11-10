@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.2403.0",
+  "version": "0.2416.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -27,6 +27,7 @@
     "@types/lodash": "^4.14.170",
     "@types/node": "^16.7.10",
     "@types/systeminformation": "^3.54.1",
+    "@types/whatwg-mimetype": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "4.19.0",
     "@typescript-eslint/parser": "4.19.0",
     "eslint": "7.23.0",
@@ -52,6 +53,7 @@
     "deasync": "0.1.26",
     "express": "4.18.1",
     "form-data": "^4.0.0",
+    "iconv-lite": "^0.6.3",
     "json5": "2.2.1",
     "lodash": "4.17.21",
     "moment": "2.29.4",
@@ -59,6 +61,7 @@
     "pino": "6.11.0",
     "prom-client": "14.1.0",
     "vm2": "3.9.11",
+    "whatwg-mimetype": "^3.0.0",
     "xmlbuilder2": "3.0.2"
   },
   "husky": {

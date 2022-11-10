@@ -5,12 +5,26 @@ import {
   InternalServerError,
   KVPair,
   Property,
-  RestApiBodyDataType
+  RestApiBodyDataType,
+  RestApiResponseType
 } from '@superblocksteam/shared';
-import axios, { AxiosRequestConfig, Method } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
 import FormData from 'form-data';
+import iconv from 'iconv-lite';
 import { isEmpty } from 'lodash';
+import MIMEType from 'whatwg-mimetype';
 import { BasePlugin } from './BasePlugin';
+
+const TEXT_MIME_TYPES = new Set([
+  // no need to include text/* types
+  'application/json',
+  'application/xml',
+  'application/xhtml+xml'
+]);
+
+function decodeResponseText(rawResponseBody: Buffer, encoding = 'utf-8') {
+  return iconv.decode(rawResponseBody, encoding);
+}
 
 export const updateRequestBody = function ({
   actionConfiguration,
@@ -79,12 +93,13 @@ export const updateRequestBody = function ({
 };
 
 export abstract class ApiPlugin extends BasePlugin {
-  executeRequest(requestConfig: AxiosRequestConfig): Promise<ExecutionOutput> {
+  // NOTE: the responseType argument will be ignored unless requestConfig.responseType is 'arraybuffer'
+  executeRequest(requestConfig: AxiosRequestConfig, responseType = RestApiResponseType.AUTO): Promise<ExecutionOutput> {
     return new Promise((resolve, reject) => {
       axios(requestConfig)
         .then((response) => {
           const ret = new ExecutionOutput();
-          ret.output = response.data;
+          ret.output = this.extractResponseData(response, responseType);
           resolve(ret);
         })
         .catch((error) => {
@@ -100,6 +115,41 @@ export abstract class ApiPlugin extends BasePlugin {
           reject(new Error(errMessage));
         });
     });
+  }
+
+  extractResponseData(response: AxiosResponse<unknown, unknown>, responseType: RestApiResponseType): unknown {
+    const dataRaw = response.data;
+
+    // if the response body has already been decoded then return that
+    if (!Buffer.isBuffer(dataRaw)) {
+      return dataRaw;
+    }
+
+    const mimeType = new MIMEType(response.headers['content-type'] ?? 'text/plain');
+    const encoding = mimeType.parameters.get('charset');
+    switch (responseType) {
+      case RestApiResponseType.BINARY:
+        // rely on the toJSON method of Buffer in node.js
+        return dataRaw.toJSON();
+      case RestApiResponseType.TEXT:
+        return decodeResponseText(dataRaw, encoding);
+      case RestApiResponseType.JSON:
+        return JSON.parse(decodeResponseText(dataRaw, encoding ?? 'utf-8'));
+      case RestApiResponseType.AUTO: {
+        if (encoding || mimeType.type === 'text' || TEXT_MIME_TYPES.has(mimeType.essence)) {
+          const dataText = decodeResponseText(dataRaw, encoding);
+          try {
+            return JSON.parse(dataText);
+          } catch {
+            return dataText;
+          }
+        } else {
+          // rely on the toJSON method of Buffer in node.js
+          return dataRaw.toJSON();
+        }
+        break;
+      }
+    }
   }
 
   generateRequestConfig(actionConfiguration: ApiActionConfiguration): AxiosRequestConfig {
