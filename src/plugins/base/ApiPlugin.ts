@@ -108,8 +108,8 @@ export abstract class ApiPlugin extends BasePlugin {
             errMessage += `: ${error.response?.statusText}`;
           }
           if (error.response?.data) {
-            const responseData =
-              typeof error.response?.data === 'string' ? error.response?.data : JSON.stringify(error.response?.data, null, 2);
+            const responseDataRaw = this.extractResponseData(error.response, RestApiResponseType.TEXT);
+            const responseData = typeof responseDataRaw === 'string' ? responseDataRaw : JSON.stringify(responseDataRaw, null, 2);
             errMessage += '\nBody:\n' + responseData;
           }
           reject(new Error(errMessage));
