@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 
+import { trace } from '@opentelemetry/api';
 import { Gauge } from 'prom-client';
 import { ConnectionPool, ConnectionPoolCoordinator, ConnectionPoolCoordinatorOptions, ConnectionPoolOptions } from '.';
 
@@ -28,6 +29,8 @@ function createMockPoolCoordinator(opts?: Partial<ConnectionPoolCoordinatorOptio
   return new ConnectionPoolCoordinator({
     maxConnections: DEFAULT_MAX_CONNECTIONS,
     maxConnectionsPerKey: 3,
+    // create a dummy tracer
+    tracer: trace.getTracer('connection-pool'),
     metrics: createFakePoolMetrics(),
     ...opts
   });

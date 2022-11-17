@@ -1,8 +1,9 @@
 import * as crypto from 'crypto';
 // the following import is needed for jest (https://github.com/facebook/jest/issues/11629)
 import { performance } from 'perf_hooks';
-import { SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
+import { SpanStatusCode, Tracer } from '@opentelemetry/api';
 import { Gauge } from 'prom-client';
+import { getTraceTagsFromActiveContext } from '../../utils/tracing';
 import { MultiMap } from './MultiMap';
 
 // wrap a connection object together with some metadata
@@ -45,12 +46,13 @@ export class ConnectionPool<Conn, CreateConnArgs extends unknown[]> {
   // connCache only contains idle connections
   private readonly connCache = new MultiMap<string, ConnectionContext<Conn>>();
 
-  private readonly tracer: Tracer = trace.getTracer('ConnectionPool');
+  private readonly tracer: Tracer;
 
   constructor(opts: ConnectionPoolOptions, factory: ConnectionPoolFactory<Conn, CreateConnArgs>) {
     this.coordinator = opts.connectionPoolCoordinator;
     this.idleTimeoutMs = opts.idleTimeoutMs;
     this.factory = factory;
+    this.tracer = this.coordinator.tracer;
     this.coordinator.registerPool(this);
   }
 
@@ -84,7 +86,8 @@ export class ConnectionPool<Conn, CreateConnArgs extends unknown[]> {
       {
         attributes: {
           // if we found a context, there was a cache hit
-          is_cached: !!context
+          is_cached: !!context,
+          ...getTraceTagsFromActiveContext()
         }
       },
       async (span) => {
@@ -198,6 +201,7 @@ interface ConnectionPoolCoordinatorMetrics {
 export interface ConnectionPoolCoordinatorOptions {
   maxConnections: number;
   maxConnectionsPerKey: number;
+  tracer: Tracer;
   metrics: ConnectionPoolCoordinatorMetrics;
 }
 
@@ -212,11 +216,13 @@ export class ConnectionPoolCoordinator {
   private readonly busyConnections = new Set<ConnectionContext<unknown>>();
   readonly maxConnections: number;
   readonly maxConnectionsPerKey: number;
+  readonly tracer: Tracer;
   private readonly metrics: ConnectionPoolCoordinatorMetrics;
 
   constructor(opts: ConnectionPoolCoordinatorOptions) {
     this.maxConnections = opts.maxConnections;
     this.maxConnectionsPerKey = opts.maxConnectionsPerKey;
+    this.tracer = opts.tracer;
     this.metrics = opts.metrics;
     this.updateMetrics();
   }
