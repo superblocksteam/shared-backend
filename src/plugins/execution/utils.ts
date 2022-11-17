@@ -221,6 +221,9 @@ export const resolveActionConfiguration = async (
     }
     return { resolved: resolvedProperties };
   }
+  if (typeof toResolve === 'number') {
+    toResolve = toResolve.toString();
+  }
   const bindingResolution = await resolveAllBindings(toResolve, context, filePaths, escapeStrings);
   return {
     resolved: render(toResolve, new FlatContext(bindingResolution))
