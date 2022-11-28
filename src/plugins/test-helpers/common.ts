@@ -45,7 +45,9 @@ export const DUMMY_EXECUTION_CONTEXT = {
   addGlobalsOverride: (): void => undefined,
   addGlobalVariableOverride: (): void => undefined,
   addOutput: (): void => undefined,
-  merge: (): void => undefined
+  merge: (): void => undefined,
+  globalBindingKeys: (): string[] => [],
+  outputBindingKeys: (): string[] => []
 };
 
 export const DUMMY_DB_DATASOURCE_CONFIGURATION = {

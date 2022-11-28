@@ -8,11 +8,11 @@ module.exports = {
           target: 'es2022',
           parser: {
             syntax: 'typescript',
-            decorators: true,
-          },
-        },
-      },
-    ],
+            decorators: true
+          }
+        }
+      }
+    ]
   },
   testRegex: '(/__tests__/.*|(\\.)(test|spec))\\.tsx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'css'],
