@@ -5,3 +5,4 @@ export * from './format';
 export * from './execution';
 export * from './configuration';
 export * from './pool';
+export * from './test-helpers';

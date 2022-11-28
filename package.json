@@ -1,7 +1,7 @@
 {
   "name": "@superblocksteam/shared-backend",
   "description": "Superblocks Backend Shared Resources",
-  "version": "0.2448.0",
+  "version": "0.2460.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
