@@ -202,7 +202,7 @@ export interface ConnectionPoolCoordinatorOptions {
   maxConnections: number;
   maxConnectionsPerKey: number;
   tracer: Tracer;
-  metrics: ConnectionPoolCoordinatorMetrics;
+  metrics?: ConnectionPoolCoordinatorMetrics;
 }
 
 /**
@@ -223,14 +223,18 @@ export class ConnectionPoolCoordinator {
     this.maxConnections = opts.maxConnections;
     this.maxConnectionsPerKey = opts.maxConnectionsPerKey;
     this.tracer = opts.tracer;
-    this.metrics = opts.metrics;
-    this.updateMetrics();
+    if (opts.metrics) {
+      this.metrics = opts.metrics;
+      this.updateMetrics();
+    }
   }
 
   private updateMetrics() {
-    this.metrics.poolConnectionsTotalGauge.set(this.connectionCount);
-    this.metrics.poolConnectionsIdleGauge.set(this.idleConnections.size);
-    this.metrics.poolConnectionsBusyGauge.set(this.busyConnections.size);
+    if (this.metrics) {
+      this.metrics.poolConnectionsTotalGauge.set(this.connectionCount);
+      this.metrics.poolConnectionsIdleGauge.set(this.idleConnections.size);
+      this.metrics.poolConnectionsBusyGauge.set(this.busyConnections.size);
+    }
   }
 
   get connectionCount(): number {
